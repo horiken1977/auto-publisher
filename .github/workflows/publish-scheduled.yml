@@ -1,0 +1,90 @@
+name: Publish Qiita articles on schedule
+
+# 毎週金曜 14:00 UTC = 23:00 JST に起動し、その日に該当する記事を1本だけ公開する。
+# 注意: GitHub Actions の cron は UTC 基準。混雑時は数分〜十数分遅延することがある
+#       （前倒しは絶対にされない）。厳密な 23:00 ちょうどは保証されない。
+on:
+  schedule:
+    - cron: '0 14 * * 5'
+  workflow_dispatch:
+    inputs:
+      article:
+        description: '手動公開する記事のベース名 (例: jissen-01)。空ならスケジュール表に従う。'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Qiita CLI
+        run: npm install
+
+      - name: 公開対象の記事を決定
+        id: pick
+        run: |
+          MANUAL="${{ github.event.inputs.article }}"
+          if [ -n "$MANUAL" ]; then
+            echo "手動指定: $MANUAL"
+            echo "name=$MANUAL" >> "$GITHUB_OUTPUT"
+          else
+            TODAY=$(date -u +%Y-%m-%d)
+            echo "本日(UTC): $TODAY"
+            case "$TODAY" in
+              2026-08-07) NAME=jissen-01 ;;
+              2026-08-14) NAME=jissen-02 ;;
+              2026-08-21) NAME=jissen-03 ;;
+              2026-08-28) NAME=jissen-04 ;;
+              2026-09-04) NAME=jissen-05 ;;
+              *)          NAME= ;;
+            esac
+            if [ -z "$NAME" ]; then
+              echo "本日は公開予定の記事がありません。"
+            else
+              echo "本日の公開対象: $NAME"
+            fi
+            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 二重投稿ガード（同じタイトルが既に存在すればスキップ）
+        id: guard
+        if: steps.pick.outputs.name != ''
+        env:
+          QIITA_TOKEN: ${{ secrets.QIITA_TOKEN }}
+        run: |
+          NAME="${{ steps.pick.outputs.name }}"
+          FILE="public/$NAME.md"
+          if [ ! -f "$FILE" ]; then
+            echo "::error::ファイルが見つかりません: $FILE"
+            exit 1
+          fi
+          RAW=$(sed -n 's/^title:[[:space:]]*//p' "$FILE" | head -n1)
+          TITLE=$(printf '%s' "$RAW" | sed -e 's/^"//' -e 's/"$//')
+          echo "対象タイトル: $TITLE"
+          EXISTS=$(curl -s -H "Authorization: Bearer $QIITA_TOKEN" \
+            "https://qiita.com/api/v2/authenticated_user/items?per_page=100" \
+            | jq --arg t "$TITLE" '[.[] | select(.title == $t)] | length')
+          if [ "$EXISTS" != "0" ]; then
+            echo "同じタイトルの記事が既に $EXISTS 件存在します。二重投稿を防ぐためスキップします。"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "既存記事なし。公開に進みます。"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Qiita に公開
+        if: steps.pick.outputs.name != '' && steps.guard.outputs.skip == 'false'
+        env:
+          QIITA_TOKEN: ${{ secrets.QIITA_TOKEN }}
+        run: |
+          echo "公開: ${{ steps.pick.outputs.name }}"
+          npx qiita publish "${{ steps.pick.outputs.name }}"

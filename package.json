@@ -1,0 +1,12 @@
+{
+  "name": "qiita-scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "サルでもわかるバイブコーディング実践編 全5回を Qiita へスケジュール公開する",
+  "scripts": {
+    "publish": "qiita publish"
+  },
+  "devDependencies": {
+    "@qiita/qiita-cli": "^1.6.0"
+  }
+}
