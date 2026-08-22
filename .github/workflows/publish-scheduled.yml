@@ -40,11 +40,11 @@ jobs:
             TODAY=$(date -u +%Y-%m-%d)
             echo "本日(UTC): $TODAY"
             case "$TODAY" in
-              2026-08-07) NAME=jissen-01 ;;
-              2026-08-14) NAME=jissen-02 ;;
-              2026-08-21) NAME=jissen-03 ;;
-              2026-08-28) NAME=jissen-04 ;;
-              2026-09-04) NAME=jissen-05 ;;
+              2026-08-28) NAME=jissen-01 ;;
+              2026-09-04) NAME=jissen-02 ;;
+              2026-09-11) NAME=jissen-03 ;;
+              2026-09-18) NAME=jissen-04 ;;
+              2026-09-25) NAME=jissen-05 ;;
               *)          NAME= ;;
             esac
             if [ -z "$NAME" ]; then
