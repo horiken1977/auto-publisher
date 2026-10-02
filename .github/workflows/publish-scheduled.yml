@@ -1,15 +1,15 @@
 name: Publish Qiita articles on schedule
 
-# 毎週金曜 14:00 UTC = 23:00 JST に起動し、その日に該当する記事を1本だけ公開する。
+# 毎週月曜・木曜 14:00 UTC = 23:00 JST に起動し、その日に該当する記事を1本だけ公開する。
 # 注意: GitHub Actions の cron は UTC 基準。混雑時は数分〜十数分遅延することがある
 #       （前倒しは絶対にされない）。厳密な 23:00 ちょうどは保証されない。
 on:
   schedule:
-    - cron: '0 14 * * 5'
+    - cron: '0 14 * * 1,4'
   workflow_dispatch:
     inputs:
       article:
-        description: '手動公開する記事のベース名 (例: jissen-01)。空ならスケジュール表に従う。'
+        description: '手動公開する記事のベース名 (例: ex-receipt-01)。空ならスケジュール表に従う。'
         required: false
         default: ''
 
@@ -40,11 +40,11 @@ jobs:
             TODAY=$(date -u +%Y-%m-%d)
             echo "本日(UTC): $TODAY"
             case "$TODAY" in
-              2026-08-28) NAME=jissen-01 ;;
-              2026-09-04) NAME=jissen-02 ;;
-              2026-09-11) NAME=jissen-03 ;;
-              2026-09-18) NAME=jissen-04 ;;
-              2026-09-25) NAME=jissen-05 ;;
+              2026-10-05) NAME=ex-receipt-01 ;;
+              2026-10-08) NAME=ex-receipt-02 ;;
+              2026-10-12) NAME=ex-receipt-03 ;;
+              2026-10-15) NAME=ex-receipt-04 ;;
+              2026-10-19) NAME=ex-receipt-05 ;;
               *)          NAME= ;;
             esac
             if [ -z "$NAME" ]; then

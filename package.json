@@ -2,7 +2,7 @@
   "name": "qiita-scheduler",
   "version": "1.0.0",
   "private": true,
-  "description": "サルでもわかるバイブコーディング実践編 全5回を Qiita へスケジュール公開する",
+  "description": "Qiita の連載記事を GitHub Actions でスケジュール公開する（現在：非エンジニアのAI業務自動化 全5回）",
   "scripts": {
     "publish": "qiita publish"
   },
