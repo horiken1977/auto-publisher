@@ -1,11 +1,13 @@
 name: Publish Qiita articles on schedule
 
 # 毎週月曜・木曜 14:00 UTC = 23:00 JST に起動し、その日に該当する記事を1本だけ公開する。
+# #1 だけは 2026-10-03(土) 09:00 UTC = 18:00 JST に前倒し（下の2つ目の cron）。
 # 注意: GitHub Actions の cron は UTC 基準。混雑時は数分〜十数分遅延することがある
 #       （前倒しは絶対にされない）。厳密な 23:00 ちょうどは保証されない。
 on:
   schedule:
     - cron: '0 14 * * 1,4'
+    - cron: '0 9 3 10 *'
   workflow_dispatch:
     inputs:
       article:
@@ -40,7 +42,7 @@ jobs:
             TODAY=$(date -u +%Y-%m-%d)
             echo "本日(UTC): $TODAY"
             case "$TODAY" in
-              2026-10-05) NAME=ex-receipt-01 ;;
+              2026-10-03) NAME=ex-receipt-01 ;;
               2026-10-08) NAME=ex-receipt-02 ;;
               2026-10-12) NAME=ex-receipt-03 ;;
               2026-10-15) NAME=ex-receipt-04 ;;
