@@ -17,7 +17,7 @@ Qiita には予約投稿機能が無いため、GitHub Actions の cron で Qiit
 
 ワークフローは毎週月曜・木曜の 14:00 UTC（23:00 JST）に起動し（#1 だけは 10-03 09:00 UTC の1回限りの cron）、`.github/workflows/publish-scheduled.yml` の日付の表にある記事を1本だけ公開する。同じタイトルの記事が既にあれば公開しない（二重投稿ガード）。
 
-**経緯:** 旧連載「サルでもわかるバイブコーディング！実践編」#1〜#5（2026-08-28〜09-25 公開）は、2026-10 に Qiita から削除し、`public/jissen-0N.md` も外した。新しい連載で書き直している（記事の正本は `mybrain/raw/blog/article/qiita/drafts/ex-receipt/`）。
+**経緯:** 旧連載「サルでもわかるバイブコーディング！実践編」#1〜#5（2026-08-28〜09-25 公開）は、2026-10 に Qiita から削除し、`public/jissen-0N.md` も外した。新しい連載で書き直している（記事の正本は `03.Business/side/blog/drafts/ex-receipt/`）。
 
 > ⚠️ GitHub Actions の cron は UTC 基準で、混雑時は数分〜十数分**遅れる**ことがある（前倒しはされない）。
 > 「23:00 ちょうど」は保証されない。厳密な定刻が必要なら B案（Mac の launchd）を検討。
