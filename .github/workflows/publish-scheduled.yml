@@ -1,24 +1,37 @@
 name: Publish Qiita articles on schedule
 
-# 毎週月曜・木曜 14:00 UTC = 23:00 JST に起動し、その日に該当する記事を1本だけ公開する。
-# 毎月3日 09:00 UTC = 18:00 JST にも起動し、10月3日は #1 を、その他の月は予定がないので何もしない。
-# 注意: GitHub Actions の cron は UTC 基準。混雑時は数分〜十数分遅延することがある
-#       （前倒しは絶対にされない）。厳密な時刻は保証されない。
-#       年1回だけのスケジュール（0 9 3 10 *）は GitHub Actions が最適化で無視することがあるため、
-#       毎月3日に変更し、ワークフロー内で10月判定を加えた。
+# 公開予定の時刻（JST）を過ぎてから24時間以内に起動した回で、その記事を1本だけ公開する。
+# GitHub Actions の cron は混雑時に数時間遅れることがあり（実績で最大9時間超）、起動が抜けることもある。
+# そのため、本番の起動（月・木 14:00 UTC = 23:00 JST）のほかに予備の起動を2回入れている。
+# 二重投稿は「公開予定の時刻のあとに記事が1本でも出ていれば公開しない」ガードで防ぐ。
 on:
   schedule:
-    - cron: '0 14 * * 1,4'
-    - cron: '0 9 3 * *'
+    - cron: '0 14 * * 1,4'    # 月・木 23:00 JST（本番）
+    - cron: '30 20 * * 1,4'   # 火・金 05:30 JST（予備）
+    - cron: '30 3 * * 2,5'    # 火・金 12:30 JST（予備）
   workflow_dispatch:
     inputs:
       article:
-        description: '手動公開する記事のベース名 (例: ex-receipt-01)。空ならスケジュール表に従う。'
+        description: '手動公開する記事のベース名 (例: ex-receipt-02)。空ならスケジュール表に従う。'
+        required: false
+        default: ''
+      dry_run:
+        description: '予行演習（true なら判定とガードまで行い、公開はしない）'
+        type: boolean
+        required: false
+        default: false
+      now:
+        description: '予行演習で使う「今」の時刻 (例: 2026-10-08T14:00:00Z)。空なら実際の時刻。'
         required: false
         default: ''
 
 permissions:
   contents: read
+
+# 本番と予備の起動が重なっても、同時に公開に進まないようにする
+concurrency:
+  group: qiita-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -35,37 +48,58 @@ jobs:
 
       - name: 公開対象の記事を決定
         id: pick
+        env:
+          MANUAL: ${{ github.event.inputs.article }}
+          NOW_INPUT: ${{ github.event.inputs.now }}
         run: |
-          MANUAL="${{ github.event.inputs.article }}"
-          if [ -n "$MANUAL" ]; then
-            echo "手動指定: $MANUAL"
-            echo "name=$MANUAL" >> "$GITHUB_OUTPUT"
+          # 公開スケジュール（記事のベース名 と 公開予定の時刻 JST）
+          SCHEDULE="
+          ex-receipt-02 2026-10-08T23:00:00+09:00
+          ex-receipt-03 2026-10-12T23:00:00+09:00
+          ex-receipt-04 2026-10-15T23:00:00+09:00
+          ex-receipt-05 2026-10-19T23:00:00+09:00
+          "
+          WINDOW=$((24 * 3600))
+
+          if [ -n "$NOW_INPUT" ]; then
+            NOW=$(date -u -d "$NOW_INPUT" +%s)
+            echo "「今」の時刻（指定）: $(date -u -d "@$NOW" '+%Y-%m-%d %H:%M UTC')"
           else
-            TODAY=$(date -u +%Y-%m-%d)
-            echo "本日(UTC): $TODAY"
-            case "$TODAY" in
-              2026-10-03) NAME=ex-receipt-01 ;;
-              2026-10-08) NAME=ex-receipt-02 ;;
-              2026-10-12) NAME=ex-receipt-03 ;;
-              2026-10-15) NAME=ex-receipt-04 ;;
-              2026-10-19) NAME=ex-receipt-05 ;;
-              *)          NAME= ;;
-            esac
-            if [ -z "$NAME" ]; then
-              echo "本日は公開予定の記事がありません。"
-            else
-              echo "本日の公開対象: $NAME"
-            fi
-            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+            NOW=$(date -u +%s)
+            echo "「今」の時刻: $(date -u -d "@$NOW" '+%Y-%m-%d %H:%M UTC')"
           fi
 
-      - name: 二重投稿ガード（同じタイトルが既に存在すればスキップ）
+          NAME=""
+          SCHED=""
+          if [ -n "$MANUAL" ]; then
+            echo "手動指定: $MANUAL"
+            NAME="$MANUAL"
+            SCHED=$NOW
+          else
+            while read -r n t; do
+              [ -z "$n" ] && continue
+              s=$(date -u -d "$t" +%s)
+              if [ "$NOW" -ge "$s" ] && [ "$NOW" -lt $((s + WINDOW)) ]; then
+                NAME="$n"
+                SCHED="$s"
+                echo "公開対象: $n（公開予定 $t、予定から $(( (NOW - s) / 60 )) 分後の起動）"
+                break
+              fi
+            done <<< "$SCHEDULE"
+            [ -z "$NAME" ] && echo "いまは公開予定の記事がありません。"
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "sched=$SCHED" >> "$GITHUB_OUTPUT"
+
+      - name: 二重投稿ガード
         id: guard
         if: steps.pick.outputs.name != ''
         env:
           QIITA_TOKEN: ${{ secrets.QIITA_TOKEN }}
+          NAME: ${{ steps.pick.outputs.name }}
+          SCHED: ${{ steps.pick.outputs.sched }}
+          MANUAL: ${{ github.event.inputs.article }}
         run: |
-          NAME="${{ steps.pick.outputs.name }}"
           FILE="public/$NAME.md"
           if [ ! -f "$FILE" ]; then
             echo "::error::ファイルが見つかりません: $FILE"
@@ -74,19 +108,59 @@ jobs:
           RAW=$(sed -n 's/^title:[[:space:]]*//p' "$FILE" | head -n1)
           TITLE=$(printf '%s' "$RAW" | sed -e 's/^"//' -e 's/"$//')
           echo "対象タイトル: $TITLE"
-          EXISTS=$(curl -s -H "Authorization: Bearer $QIITA_TOKEN" \
-            "https://qiita.com/api/v2/authenticated_user/items?per_page=100" \
-            | jq --arg t "$TITLE" '[.[] | select(.title == $t)] | length')
-          if [ "$EXISTS" != "0" ]; then
-            echo "同じタイトルの記事が既に $EXISTS 件存在します。二重投稿を防ぐためスキップします。"
+
+          # API がエラーを返したら（トークン切れなど）、公開を飛ばさずに失敗として止める
+          CODE=$(curl -s -o items.json -w '%{http_code}' \
+            -H "Authorization: Bearer $QIITA_TOKEN" \
+            "https://qiita.com/api/v2/authenticated_user/items?per_page=100")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Qiita API がエラーを返しました（HTTP $CODE）。QIITA_TOKEN が有効か確かめてください。"
+            head -c 300 items.json; echo
+            exit 1
+          fi
+          echo "Qiita API: OK（トークンは有効）"
+
+          # 1. 同じタイトルの記事が既にあれば公開しない
+          SAME=$(jq --arg t "$TITLE" '[.[] | select(.title == $t)] | length' items.json)
+          if [ "$SAME" != "0" ]; then
+            echo "同じタイトルの記事が既に $SAME 件あります。公開しません。"
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 2. 公開予定の時刻のあとに記事が出ていれば、この回は公開済みと見なす
+          #    （公開後に Qiita でタイトルを変えても、予備の起動で二重に投稿しない）
+          if [ -z "$MANUAL" ]; then
+            AFTER=0
+            while read -r c; do
+              [ -z "$c" ] && continue
+              if [ "$(date -u -d "$c" +%s)" -ge "$SCHED" ]; then
+                AFTER=$((AFTER + 1))
+              fi
+            done < <(jq -r '.[].created_at' items.json)
+            if [ "$AFTER" != "0" ]; then
+              echo "公開予定の時刻のあとに記事が $AFTER 件出ています。この回は公開済みと見なし、公開しません。"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          echo "既存の記事なし。公開に進みます。"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: 予行演習の結果
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          if [ -z "${{ steps.pick.outputs.name }}" ]; then
+            echo "予行演習：公開する記事はありません。"
+          elif [ "${{ steps.guard.outputs.skip }}" = "true" ]; then
+            echo "予行演習：${{ steps.pick.outputs.name }} はガードで公開しません。"
           else
-            echo "既存記事なし。公開に進みます。"
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "予行演習：本番なら ${{ steps.pick.outputs.name }} を公開します（今回は公開していません）。"
           fi
 
       - name: Qiita に公開
-        if: steps.pick.outputs.name != '' && steps.guard.outputs.skip == 'false'
+        if: steps.pick.outputs.name != '' && steps.guard.outputs.skip == 'false' && github.event.inputs.dry_run != 'true'
         env:
           QIITA_TOKEN: ${{ secrets.QIITA_TOKEN }}
         run: |
