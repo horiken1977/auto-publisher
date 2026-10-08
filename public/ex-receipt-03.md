@@ -48,13 +48,13 @@ ignorePublish: false
 ![画面2：ご利用履歴の一覧。照会期間を選んで、各行の「領収書表示」を押す](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/ce2b3e72-b5ac-4f1b-813b-cfe226196863.png)
 *画面2：ご利用履歴の一覧。照会期間を選んで、各行の「領収書表示」を押す*
 
-![画面3：領収書の表示。宛名を入れて「印刷」を押す](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/873c5c37-8818-4d9e-a8ed-38f32611810d.png)
+![画面3：領収書の表示。宛名を入れて「印刷」を押す](https://raw.githubusercontent.com/horiken1977/auto-publisher/main/images/ex-receipt/03-3.png)
 *画面3：領収書の表示。宛名を入れて「印刷」を押す*
 
-![画面4：「印刷」で開く正式な領収書。PDFに保存する](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/bf690e3c-40ac-4636-a1d8-f586dcc80315.png)
+![画面4：「印刷」で開く正式な領収書。PDFに保存する](https://raw.githubusercontent.com/horiken1977/auto-publisher/main/images/ex-receipt/03-4.png)
 *画面4：「印刷」で開く正式な領収書。PDFに保存する*
 
-![画面5：保存の画面。手作業のときは、1枚ずつこの画面で保存していた](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/f9084fdc-e6cb-421a-aa66-e01473269160.png)
+![画面5：保存の画面。手作業のときは、1枚ずつこの画面で保存していた](https://raw.githubusercontent.com/horiken1977/auto-publisher/main/images/ex-receipt/03-5.png)
 *画面5：保存の画面。手作業のときは、1枚ずつこの画面で保存していた*
 
 このとき渡した画面は何枚かあります。AIが書いたコードのコメントには、私が渡した画面の番号が「明細ページ(緑の画面 ⑤)」「正式な領収書(⑥)」の形でいまも残っています（`agents/download_agent.py:5-7`）。この記事の画面番号は撮り直しにあわせて1から振り直したので、コードの番号とは合いません。

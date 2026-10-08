@@ -45,10 +45,10 @@ ignorePublish: false
 
 ログインを待つ間は、ターミナルに「SMS認証（ワンタイムパスワード）が表示されたら、それも入力してください」「手動でEnterを押す必要はありません」と案内を出します（`agents/login_agent.py:44-49`）。
 
-![画面1：EX予約のログイン画面（スマートEXもほぼ同じ）。IDとパスワードは人が入れる](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/a04d484b-b827-4292-ad11-9a93e76d571d.png)
+![画面1：EX予約のログイン画面（スマートEXもほぼ同じ）。IDとパスワードは人が入れる](https://raw.githubusercontent.com/horiken1977/auto-publisher/main/images/ex-receipt/02-1.png)
 *画面1：EX予約のログイン画面（スマートEXもほぼ同じ）。IDとパスワードは人が入れる*
 
-![画面2：ログインのあとに出るワンタイムパスワード（SMS認証）の画面。ここまでが人の番](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/699256/cec92705-3c2c-4ce7-a2e0-1727539f32ad.png)
+![画面2：ログインのあとに出るワンタイムパスワード（SMS認証）の画面。ここまでが人の番](https://raw.githubusercontent.com/horiken1977/auto-publisher/main/images/ex-receipt/02-2.png)
 *画面2：ログインのあとに出るワンタイムパスワード（SMS認証）の画面。ここまでが人の番*
 
 人がやる所を決めると、次に要るのは「人の番が終わった」をツールが知る方法です。この判定は、今の版の最初の日に何度も書き換わりました。

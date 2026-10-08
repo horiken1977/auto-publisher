@@ -14,8 +14,14 @@ Qiita には予約投稿機能が無いため、GitHub Actions の cron で Qiit
 | 人がクリックする順番を、そのままAIに書かせる | `public/ex-receipt-03.md` | 2026-10-12(月) 23:00 |
 | 止まった画面は、撮ってAIに見せればいい | `public/ex-receipt-04.md` | 2026-10-15(木) 23:00 |
 | レビューとは、動かした結果を見て判断すること | `public/ex-receipt-05.md` | 2026-10-19(月) 23:00 |
+| （Orca編）1人の天才より複数の秀才に対話させる | `public/orca-multi-agent-01.md` | 2026-10-22(木) 23:00 |
+| （Orca編）対話ループをOrcaで簡単に実装 | `public/orca-multi-agent-02.md` | 2026-10-26(月) 23:00 |
+| （Orca編）マネージャーの仕事は「基準を決めて、チェックする」 | `public/orca-multi-agent-03.md` | 2026-10-29(木) 23:00 |
+| （Orca編）仕事単位で測る | `public/orca-multi-agent-04.md` | 2026-11-02(月) 23:00 |
 
-#2〜#5 のタイトルは「非エンジニアのAI業務自動化（EX領収書自動出力）/…」。
+**2026-10-08 に、残りの8本（ex-receipt-02〜05・orca-multi-agent-01〜04）を予定を待たずに手で公開した**（workflow_dispatch で1本ずつ）。公開の前に、画像の見る所に赤枠を付けた（ex-receipt の赤枠を付け直した画像は `images/ex-receipt/` に置き、記事からは raw.githubusercontent.com の URL で参照する）。下の表の日時は、もとの予定。
+
+#2〜#5 のタイトルは「非エンジニアのAI業務自動化（EX領収書自動出力）/…」、Orca編は「非エンジニアのAI業務自動化（Orcaマルチエージェント）/…」。Orca編の画像は `images/orca-multi-agent/` に置き、記事からは raw.githubusercontent.com の URL で参照する（このリポジトリが公開なので見える。記事の正本は `drafts/orca-multi-agent/`、公開用は下書きメモを消し画像の URL を差し替えたもの）。
 
 ワークフローは月・木 14:00 UTC（23:00 JST）に起動し、遅れや起動の抜けに備えて予備の起動を2回（20:30 UTC・翌 03:30 UTC）入れている。起動した時刻が、`.github/workflows/publish-scheduled.yml` の表の公開予定から24時間以内なら、その記事を1本だけ公開する。
 
